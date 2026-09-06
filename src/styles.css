@@ -664,3 +664,24 @@ h2 {
   .footer { align-items: start; flex-direction: column; padding: 30px 0; }
   .footer-right { align-items: start; }
 }
+/* Case study / routed page styles */
+.routed-page { min-height: 100vh; }
+.site-header { display:flex; justify-content:space-between; align-items:center; padding-top:24px; padding-bottom:24px; }
+.back-link { display:inline-flex; align-items:center; gap:6px; opacity:.75; text-decoration:none; }
+.case-hero { padding-bottom:72px; }
+.case-content { max-width: 920px; }
+.case-block { border-top:1px solid rgba(255,255,255,.12); padding:42px 0; }
+.case-block h2 { margin:0 0 18px; }
+.case-block-body { max-width:800px; line-height:1.75; }
+.case-block-body li { margin:8px 0; }
+.case-architecture { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-top:16px; }
+.case-architecture span { border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:10px 12px; font-size:13px; }
+.case-architecture b { opacity:.5; }
+.case-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:18px 0; }
+.case-metrics .metric { border:1px solid rgba(255,255,255,.12); border-radius:8px; padding:18px; }
+.case-metrics .metric strong { display:block; font-size:26px; }
+.case-metrics .metric span { display:block; margin-top:6px; font-size:12px; opacity:.7; }
+.case-pills { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0; }
+.case-pills span { border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:8px 11px; font-size:12px; }
+.routed-content { min-height:65vh; }
+@media (max-width:700px){ .site-header{width:calc(100% - 32px)} .case-architecture b{display:none} .case-architecture span{flex:1 1 40%} }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -29,11 +30,11 @@ type CaseStudyProps = {
   summary: string
   tags: string[]
   metrics: { value: string; label: string }[]
-  architecture: React.ReactNode
+  architecture: ReactNode
   href: string
 }
 
-function Tag({ children }: { children: React.ReactNode }) {
+function Tag({ children }: { children: ReactNode }) {
   return <span className="tag">{children}</span>
 }
 
@@ -158,7 +159,7 @@ function GitOpsDiagram() {
   )
 }
 
-function App() {
+function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const closeMenu = () => setMenuOpen(false)
@@ -466,4 +467,82 @@ function App() {
   )
 }
 
-export default App
+
+
+function CaseStudyPage({ kind }: { kind: 'karpenter' | 'gitops' }) {
+  const isKarpenter = kind === 'karpenter'
+  const title = isKarpenter ? 'Dynamic Kubernetes Capacity' : 'GitOps at Scale'
+  const subtitle = isKarpenter
+    ? 'Karpenter on Amazon EKS'
+    : 'Argo CD + GitHub Actions + ECR'
+  const intro = isKarpenter
+    ? 'Moving EKS capacity from fixed node groups to dynamic provisioning with Karpenter, ARM64 and consolidation.'
+    : 'Separating build from deployment with GitHub Actions, ECR, GitOps and Argo CD across three Kubernetes environments.'
+
+  return (
+    <div className="site-shell routed-page">
+      <header className="site-header container">
+        <a className="brand" href="/">MOMOH SANI MUSA</a>
+        <a className="back-link" href="/#work"><ChevronRight size={15} /> Back to selected work</a>
+      </header>
+      <main>
+        <section className="section case-hero container">
+          <div className="eyebrow">CASE STUDY / {subtitle.toUpperCase()}</div>
+          <h1>{title}</h1>
+          <p className="hero-copy">{intro}</p>
+        </section>
+        <section className="section case-content container">
+          {isKarpenter ? <KarpenterCase /> : <GitOpsCase />}
+        </section>
+      </main>
+      <footer className="footer container"><div><strong>MOMOH SANI MUSA</strong><span>Senior DevOps / Platform Engineer</span></div></footer>
+    </div>
+  )
+}
+
+function CaseBlock({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="case-block"><h2>{title}</h2><div className="case-block-body">{children}</div></section>
+}
+
+function Architecture({ children }: { children: ReactNode }) {
+  return <div className="case-architecture">{children}</div>
+}
+
+function KarpenterCase() {
+  return <>
+    <CaseBlock title="The problem"><p>The EKS platform relied on fixed managed node groups. Capacity had to be planned ahead of workload demand, creating over-provisioning and making scheduling less responsive as workloads changed.</p></CaseBlock>
+    <CaseBlock title="What I changed"><ul><li>Owned the Karpenter implementation end-to-end.</li><li>Introduced NodePools and EC2NodeClasses for dynamic provisioning.</li><li>Added ARM64 capacity where workload compatibility allowed it.</li><li>Enabled consolidation to remove unnecessary capacity.</li><li>Designed around CPU/memory requirements, availability zones, labels, taints and critical system workloads.</li></ul></CaseBlock>
+    <CaseBlock title="Architecture"><Architecture><span>Workloads</span><b>→</b><span>EKS</span><b>→</b><span>Karpenter</span><b>→</b><span>NodePool</span><b>→</b><span>EC2NodeClass</span><b>→</b><span>EC2 capacity</span></Architecture></CaseBlock>
+    <CaseBlock title="Engineering considerations"><p>Dynamic provisioning is only useful when scheduling constraints are explicit. I treated instance architecture, CPU and memory requirements, AZ placement, workload constraints, baseline capacity, IAM and consolidation behavior as part of the platform design.</p></CaseBlock>
+    <CaseBlock title="Outcome"><div className="case-metrics"><Metric value="~20%" label="compute cost reduction*" /><Metric value="15–20" label="nodes/workloads in scope" /><Metric value="ARM64" label="used for eligible workloads" /></div><small>*Portfolio metric; validate against internal reporting before publishing externally.</small></CaseBlock>
+  </>
+}
+
+function GitOpsCase() {
+  return <>
+    <CaseBlock title="The problem"><p>Deployments relied on raw Kubernetes manifests and manual steps. As the platform grew, deployments became harder to audit, standardize and operate consistently across environments.</p></CaseBlock>
+    <CaseBlock title="What I changed"><ul><li>Implemented Argo CD and GitOps as the continuous delivery layer.</li><li>Kept GitHub Actions responsible for tests, validation, image builds and publishing artifacts to ECR.</li><li>Updated the GitOps repository with the desired image version.</li><li>Used Argo CD to reconcile desired state into EKS.</li><li>Configured automatic synchronization for lower environments and manual promotion for production.</li></ul></CaseBlock>
+    <CaseBlock title="Delivery flow"><Architecture><span>Developer</span><b>→</b><span>GitHub</span><b>→</b><span>Actions</span><b>→</b><span>ECR</span><b>→</b><span>GitOps repo</span><b>→</b><span>Argo CD</span><b>→</b><span>EKS</span></Architecture></CaseBlock>
+    <CaseBlock title="Operating model"><p>CI produces and validates immutable artifacts. Git stores desired deployment state. Argo CD continuously reconciles that state with the cluster. This separation reduced direct cluster access, made changes auditable through Git and provided a clear rollback path.</p></CaseBlock>
+    <CaseBlock title="Outcome"><div className="case-metrics"><Metric value="4" label="applications" /><Metric value="~60" label="microservices" /><Metric value="3" label="Kubernetes environments" /><Metric value="25/mo" label="Argo CD deployments" /></div><div className="case-pills"><span>20% fewer manual deployment steps</span><span>30% faster deployments</span><span>55% fewer deployment-related incidents</span></div><small>Portfolio metrics supplied for this case study; validate against internal reporting before publishing externally.</small></CaseBlock>
+  </>
+}
+
+function ResumePage() {
+  return <div className="site-shell routed-page"><header className="site-header container"><a className="brand" href="/">MOMOH SANI MUSA</a></header><main className="section container routed-content"><div className="eyebrow">RESUME</div><h1>Momoh Sani Musa</h1><p className="hero-copy">Senior DevOps / Platform Engineer</p><div className="hero-actions"><a className="button primary" href="/resume.pdf" target="_blank" rel="noreferrer">Open resume <ArrowUpRight size={16} /></a><a className="button" href="/">Back home</a></div></main></div>
+}
+
+function NotFoundPage() {
+  return <div className="site-shell routed-page"><main className="section container routed-content"><div className="eyebrow">404</div><h1>Page not found.</h1><p className="hero-copy">The page you're looking for doesn't exist.</p><a className="button primary" href="/">Back home</a></main></div>
+}
+
+function Router() {
+  const path = window.location.pathname.replace(/\/+$/, '') || '/'
+  if (path === '/') return <Home />
+  if (path === '/work/karpenter') return <CaseStudyPage kind="karpenter" />
+  if (path === '/work/gitops') return <CaseStudyPage kind="gitops" />
+  if (path === '/resume') return <ResumePage />
+  return <NotFoundPage />
+}
+
+export default Router
