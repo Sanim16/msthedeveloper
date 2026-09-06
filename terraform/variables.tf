@@ -8,7 +8,7 @@ variable "domain_name" {
 }
 variable "github_repository" {
   type    = string
-  default = "Sanim16/msthedeveloper"
+  default = "Sanim16@97568768/msthedeveloper@1358602262"
 }
 variable "github_branch" {
   type    = string
