@@ -1,0 +1,5 @@
+aws_region = "eu-central-1"
+domain_name = "msthedeveloper.com"
+github_repository = "Sanim16/msthedeveloper"
+github_branch = "main"
+price_class = "PriceClass_100"
