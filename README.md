@@ -26,7 +26,6 @@ npm run build
 
 The build output is generated in `dist/`.
 
-
 ## Planned AWS architecture
 
 ```text
