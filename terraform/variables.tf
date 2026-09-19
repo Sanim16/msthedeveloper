@@ -2,18 +2,28 @@ variable "aws_region" {
   type    = string
   default = "eu-central-1"
 }
+
 variable "domain_name" {
   type    = string
   default = "msthedeveloper.com"
 }
+
 variable "github_repository" {
   type    = string
   default = "Sanim16@97568768/msthedeveloper@1358602262"
 }
+
+variable "github_repository_id" {
+  description = "Immutable GitHub repository ID used to scope the Terraform plan OIDC role."
+  type        = string
+  default     = "1358602262"
+}
+
 variable "github_branch" {
   type    = string
   default = "main"
 }
+
 variable "price_class" {
   type    = string
   default = "PriceClass_100"
