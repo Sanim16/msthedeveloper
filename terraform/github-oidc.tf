@@ -36,8 +36,7 @@ locals {
   github_repository_name  = split("/", var.github_repository)[1]
 
   github_plan_sub_patterns = [
-    "repo:${var.github_repository}:pull_request",
-    "repo:${local.github_repository_owner}@*/${local.github_repository_name}@*:pull_request"
+    "repo:${var.github_repository}:pull_request"
   ]
 
   github_apply_sub_patterns = [
@@ -56,9 +55,7 @@ resource "aws_iam_role" "github_terraform_plan" {
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "token.actions.githubusercontent.com:aud"           = "sts.amazonaws.com"
-          "token.actions.githubusercontent.com:repository_id" = var.github_repository_id
-          "token.actions.githubusercontent.com:event_name"    = "pull_request"
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
           "token.actions.githubusercontent.com:sub" = local.github_plan_sub_patterns
@@ -73,79 +70,61 @@ resource "aws_iam_role" "github_terraform_plan" {
   }
 }
 
-resource "aws_iam_role_policy" "github_terraform_plan" {
-  name = "msthedeveloper-terraform-plan"
+resource "aws_iam_role_policy_attachment" "github_terraform_plan_read_only" {
+  role       = aws_iam_role.github_terraform_plan.name
+  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+}
+
+resource "aws_iam_role_policy" "github_terraform_plan_backend" {
+  name = "terraform-backend-access"
   role = aws_iam_role.github_terraform_plan.id
+
   policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [
       {
-        Sid    = "TerraformState"
         Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          # "s3:PutObject",
-          # "s3:DeleteObject"
-        ]
-        Resource = "arn:aws:s3:::unique-bucket-name-msctf/msthedeveloper-site/terraform.tfstate"
-      },
-      {
-        Sid    = "TerraformStateBucket"
-        Effect = "Allow"
-        Action = [
-          "s3:GetBucketLocation",
-          "s3:ListBucket"
-        ]
-        Resource = "arn:aws:s3:::unique-bucket-name-msctf"
-      },
-      {
-        Sid    = "TerraformLock"
-        Effect = "Allow"
+
         Action = [
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject"
         ]
+
         Resource = [
+          "arn:aws:s3:::unique-bucket-name-msctf/msthedeveloper-site/terraform.tfstate",
           "arn:aws:s3:::unique-bucket-name-msctf/msthedeveloper-site/terraform.tfstate.tflock"
         ]
       },
       {
-        Sid    = "TerraformStateKms"
         Effect = "Allow"
+
+        Action = [
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
+        ]
+
+        Resource = "arn:aws:s3:::unique-bucket-name-msctf"
+
+        Condition = {
+          StringLike = {
+            "s3:prefix" = [
+              "msthedeveloper-site/*"
+            ]
+          }
+        }
+      },
+      {
+        Effect = "Allow"
+
         Action = [
           "kms:Decrypt",
           "kms:Encrypt",
           "kms:GenerateDataKey"
         ]
+
         Resource = "arn:aws:kms:us-east-1:771700505853:key/3e5a66e8-ccc2-4eb0-b32b-d3e5a9f0847c"
-      },
-      {
-        Sid    = "ReadInfrastructure"
-        Effect = "Allow"
-        Action = [
-          "acm:DescribeCertificate",
-          "acm:ListCertificates",
-          "cloudfront:GetDistribution",
-          "cloudfront:ListDistributions",
-          "cloudfront:GetOriginAccessControl",
-          "cloudfront:ListOriginAccessControls",
-          "iam:GetOpenIDConnectProvider",
-          "iam:GetRole",
-          "route53:GetHostedZone",
-          "route53:ListHostedZonesByName",
-          "route53:ListResourceRecordSets",
-          "route53:ListTagsForResource",
-          "s3:GetBucketEncryption",
-          "s3:GetBucketLocation",
-          "s3:GetBucketOwnershipControls",
-          "s3:GetBucketPolicy",
-          "s3:GetBucketPublicAccessBlock",
-          "s3:GetBucketVersioning",
-          "s3:ListAllMyBuckets",
-          "sts:GetCallerIdentity"
-        ]
-        Resource = "*"
       }
     ]
   })
@@ -163,10 +142,7 @@ resource "aws_iam_role" "github_terraform_apply" {
       Action = "sts:AssumeRoleWithWebIdentity",
       Condition = {
         StringEquals = {
-          "token.actions.githubusercontent.com:aud"           = "sts.amazonaws.com"
-          "token.actions.githubusercontent.com:repository_id" = var.github_repository_id
-          "token.actions.githubusercontent.com:event_name"    = "push"
-          "token.actions.githubusercontent.com:ref"           = "refs/heads/${var.github_branch}"
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
           "token.actions.githubusercontent.com:sub" = local.github_apply_sub_patterns
