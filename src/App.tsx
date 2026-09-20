@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import {
   ArrowDownRight,
   ArrowUpRight,
-  Check,
   ChevronRight,
   Cloud,
   Code2,
@@ -24,7 +23,7 @@ import { SiGithub } from 'react-icons/si'
 const githubUrl = 'https://github.com/Sanim16/'
 const linkedinUrl = 'https://www.linkedin.com/in/momohsanimusa'
 
-function ThemeToggle() {
+export function ThemeToggle() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'dark'
 
@@ -190,7 +189,45 @@ function GitOpsDiagram() {
   )
 }
 
-function Home() {
+function CostDiagram() {
+  return (
+    <div className="diagram">
+      <div className="diagram-node primary">
+        <Cloud size={18} />
+        <span>Cost & usage data</span>
+      </div>
+      <div className="connector vertical" />
+      <div className="diagram-node">
+        <ServerCog size={18} />
+        <span>Rightsizing review</span>
+      </div>
+      <div className="connector vertical" />
+      <div className="diagram-split">
+        <div className="diagram-node small">
+          <Zap size={16} />
+          <span>Autoscaling</span>
+        </div>
+        <div className="diagram-node small">
+          <Layers3 size={16} />
+          <span>Cleanup</span>
+        </div>
+      </div>
+      <div className="connector vertical" />
+      <div className="diagram-node accent">
+        <Cloud size={18} />
+        <span>Optimized AWS footprint</span>
+      </div>
+      <div className="connector vertical" />
+      <div className="pod-row">
+        <span>EC2</span>
+        <span>EKS</span>
+        <span>RDS</span>
+      </div>
+    </div>
+  )
+}
+
+export function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const closeMenu = () => setMenuOpen(false)
@@ -249,12 +286,11 @@ function Home() {
               </p>
               <div className="hero-actions">
                 <a className="button primary" href="#work">View my work <ChevronRight size={17} /></a>
-                <a className="button secondary" href="/resume.pdf">Download resume <ArrowDownRight size={17} /></a>
+                <a className="button secondary" href="#experience">View experience <ArrowDownRight size={17} /></a>
               </div>
               <div className="hero-links">
                 <a href={githubUrl} target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14} /></a>
                 <a href={linkedinUrl} target="_blank" rel="noreferrer">LinkedIn <ArrowUpRight size={14} /></a>
-                <a href="mailto:">Email <ArrowUpRight size={14} /></a>
               </div>
             </div>
 
@@ -347,6 +383,21 @@ function Home() {
               ]}
               architecture={<GitOpsDiagram />}
               href="/work/gitops"
+            />
+
+            <CaseStudy
+              number="03"
+              title="AWS Cost Optimization"
+              subtitle="Rightsizing, Autoscaling & Multi-Account AWS"
+              summary="Led a cost-optimization program across a multi-account AWS environment—combining compute rightsizing, autoscaling tuning and infrastructure cleanup to reduce cloud spend without impacting reliability."
+              tags={['AWS', 'FinOps', 'CloudWatch', 'EC2', 'Multi-Account', 'Terraform']}
+              metrics={[
+                { value: '35%', label: 'AWS spend reduction' },
+                { value: 'Multi-account', label: 'AWS environment' },
+                { value: '0', label: 'reliability regressions' },
+              ]}
+              architecture={<CostDiagram />}
+              href="/work/cost-optimization"
             />
           </div>
         </section>
@@ -473,9 +524,9 @@ function Home() {
           <div>
             <div className="eyebrow">THE COMPLETE PICTURE</div>
             <h2>Want the complete picture?</h2>
-            <p>View my full experience, technical background and career history in my resume.</p>
+            <p>View my full experience, technical background and career history below.</p>
           </div>
-          <a className="button primary" href="/resume.pdf">Download resume <ArrowDownRight size={17} /></a>
+          <a className="button primary" href="#experience">View experience <ArrowDownRight size={17} /></a>
         </section>
 
         <section id="contact" className="contact-section">
@@ -499,7 +550,6 @@ function Home() {
                   <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.61 0 4.28 2.38 4.28 5.48v6.26zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM3.56 9h3.56v11.45H3.56V9zM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.72V1.72C24 .77 23.21 0 22.23 0z" />
                 </svg> LinkedIn <ArrowUpRight size={14} />
               </a>
-              <a href="mailto:"><Terminal size={18} /> Email <ArrowUpRight size={14} /></a>
             </div>
           </div>
         </section>
@@ -521,15 +571,31 @@ function Home() {
 
 
 
-function CaseStudyPage({ kind }: { kind: 'karpenter' | 'gitops' }) {
-  const isKarpenter = kind === 'karpenter'
-  const title = isKarpenter ? 'Dynamic Kubernetes Capacity' : 'GitOps at Scale'
-  const subtitle = isKarpenter
-    ? 'Karpenter on Amazon EKS'
-    : 'Argo CD + GitHub Actions + ECR'
-  const intro = isKarpenter
-    ? 'Moving EKS capacity from fixed node groups to dynamic provisioning with Karpenter, ARM64 and consolidation.'
-    : 'Separating build from deployment with GitHub Actions, ECR, GitOps and Argo CD across three Kubernetes environments.'
+type CaseStudyKind = 'karpenter' | 'gitops' | 'cost'
+
+const caseStudyContent: Record<CaseStudyKind, { title: string; subtitle: string; intro: string; Content: () => ReactNode }> = {
+  karpenter: {
+    title: 'Dynamic Kubernetes Capacity',
+    subtitle: 'Karpenter on Amazon EKS',
+    intro: 'Moving EKS capacity from fixed node groups to dynamic provisioning with Karpenter, ARM64 and consolidation.',
+    Content: KarpenterCase,
+  },
+  gitops: {
+    title: 'GitOps at Scale',
+    subtitle: 'Argo CD + GitHub Actions + ECR',
+    intro: 'Separating build from deployment with GitHub Actions, ECR, GitOps and Argo CD across three Kubernetes environments.',
+    Content: GitOpsCase,
+  },
+  cost: {
+    title: 'AWS Cost Optimization',
+    subtitle: 'Rightsizing, Autoscaling & Multi-Account AWS',
+    intro: 'Cutting AWS spend across a multi-account environment through rightsizing, autoscaling tuning and infrastructure cleanup.',
+    Content: CostCase,
+  },
+}
+
+function CaseStudyPage({ kind }: { kind: CaseStudyKind }) {
+  const { title, subtitle, intro, Content } = caseStudyContent[kind]
 
   return (
     <div className="site-shell routed-page">
@@ -544,7 +610,7 @@ function CaseStudyPage({ kind }: { kind: 'karpenter' | 'gitops' }) {
           <p className="hero-copy">{intro}</p>
         </section>
         <section className="section case-content container">
-          {isKarpenter ? <KarpenterCase /> : <GitOpsCase />}
+          <Content />
         </section>
       </main>
       <footer className="footer container"><div><strong>MOMOH SANI MUSA</strong><span>Senior DevOps / Platform Engineer</span></div></footer>
@@ -580,8 +646,18 @@ function GitOpsCase() {
   </>
 }
 
+function CostCase() {
+  return <>
+    <CaseBlock title="The problem"><p>Fixed capacity and unreviewed resources across a multi-account AWS environment were driving avoidable spend—instances and clusters sized for peak load year-round, and infrastructure that outlived the workloads it was provisioned for.</p></CaseBlock>
+    <CaseBlock title="What I changed"><ul><li>Led a rightsizing review across EC2 and Kubernetes workloads, matching capacity to actual usage.</li><li>Tuned autoscaling so compute tracked real demand instead of static baselines.</li><li>Identified and decommissioned unused or idle infrastructure across accounts.</li><li>Built cost visibility with CloudWatch to catch drift before it became waste.</li></ul></CaseBlock>
+    <CaseBlock title="Architecture"><Architecture><span>Cost & usage data</span><b>→</b><span>Rightsizing review</span><b>→</b><span>Autoscaling + cleanup</span><b>→</b><span>Optimized footprint</span></Architecture></CaseBlock>
+    <CaseBlock title="Engineering considerations"><p>Cost work only holds up if reliability doesn't regress. Every rightsizing and cleanup change was evaluated against headroom, failure tolerance and peak-load behavior before it shipped, not just against the cost dashboard.</p></CaseBlock>
+    <CaseBlock title="Outcome"><div className="case-metrics"><Metric value="~35%" label="overall AWS spend reduction*" /><Metric value="Multi-account" label="AWS environment" /><Metric value="0" label="reliability regressions" /></div><small>*Portfolio metric; validate against internal reporting before publishing externally.</small></CaseBlock>
+  </>
+}
+
 function ResumePage() {
-  return <div className="site-shell routed-page"><header className="site-header container"><a className="brand" href="/">MOMOH SANI MUSA</a></header><main className="section container routed-content"><div className="eyebrow">RESUME</div><h1>Momoh Sani Musa</h1><p className="hero-copy">Senior DevOps / Platform Engineer</p><div className="hero-actions"><a className="button primary" href="/resume.pdf" target="_blank" rel="noreferrer">Open resume <ArrowUpRight size={16} /></a><a className="button" href="/">Back home</a></div></main></div>
+  return <div className="site-shell routed-page"><header className="site-header container"><a className="brand" href="/">MOMOH SANI MUSA</a></header><main className="section container routed-content"><div className="eyebrow">RESUME</div><h1>The downloadable resume has been retired.</h1><p className="hero-copy">Full experience, technical background and career history are on the home page.</p><div className="hero-actions"><a className="button primary" href="/#experience">View experience <ArrowDownRight size={17} /></a><a className="button" href="/">Back home</a></div></main></div>
 }
 
 function NotFoundPage() {
@@ -593,6 +669,7 @@ function Router() {
   if (path === '/') return <Home />
   if (path === '/work/karpenter') return <CaseStudyPage kind="karpenter" />
   if (path === '/work/gitops') return <CaseStudyPage kind="gitops" />
+  if (path === '/work/cost-optimization') return <CaseStudyPage kind="cost" />
   if (path === '/resume') return <ResumePage />
   return <NotFoundPage />
 }
