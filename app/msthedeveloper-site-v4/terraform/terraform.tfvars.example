@@ -1,7 +1,0 @@
-aws_region = "eu-central-1"
-domain_name = "msthedeveloper.com"
-github_repository = "Sanim16/msthedeveloper"
-# Get with: gh api repos/Sanim16/msthedeveloper --jq '.id'
-github_repository_id = "123456789"
-github_branch = "main"
-price_class = "PriceClass_100"
