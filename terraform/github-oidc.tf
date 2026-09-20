@@ -152,12 +152,224 @@ resource "aws_iam_role" "github_terraform_apply" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "github_terraform_apply_power_user" {
-  role       = aws_iam_role.github_terraform_apply.name
-  policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
+resource "aws_iam_role_policy" "github_terraform_apply_app_infra" {
+  name = "terraform-apply-app-infra"
+  role = aws_iam_role.github_terraform_apply.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Sid    = "S3SiteBucket"
+        Effect = "Allow"
+        Action = [
+          "s3:CreateBucket",
+          "s3:DeleteBucket",
+          "s3:ListBucket",
+          "s3:GetBucketLocation",
+          "s3:GetBucketAcl",
+          "s3:GetBucketPolicy",
+          "s3:PutBucketPolicy",
+          "s3:DeleteBucketPolicy",
+          "s3:GetBucketTagging",
+          "s3:PutBucketTagging",
+          "s3:GetBucketVersioning",
+          "s3:PutBucketVersioning",
+          "s3:GetEncryptionConfiguration",
+          "s3:PutEncryptionConfiguration",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:PutBucketPublicAccessBlock",
+          "s3:GetBucketOwnershipControls",
+          "s3:PutBucketOwnershipControls",
+          "s3:GetBucketObjectLockConfiguration",
+          "s3:GetBucketLogging",
+          "s3:GetBucketWebsite",
+          "s3:GetBucketCORS",
+          "s3:GetBucketRequestPayment",
+          "s3:GetAccelerateConfiguration",
+          "s3:GetReplicationConfiguration",
+          "s3:GetLifecycleConfiguration",
+          "s3:GetBucketNotification"
+        ]
+        Resource = "arn:aws:s3:::msthedeveloper-site-*"
+      },
+      {
+        Sid    = "CloudFrontUnscopable"
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateDistribution",
+          "cloudfront:CreateOriginAccessControl",
+          "cloudfront:GetOriginAccessControl",
+          "cloudfront:UpdateOriginAccessControl",
+          "cloudfront:DeleteOriginAccessControl"
+        ]
+        # CreateDistribution has no resource type before the distribution exists, and
+        # CloudFront OAC actions have no resource-level permission support at all.
+        Resource = "*"
+      },
+      {
+        Sid    = "CloudFrontDistribution"
+        Effect = "Allow"
+        Action = [
+          "cloudfront:GetDistribution",
+          "cloudfront:GetDistributionConfig",
+          "cloudfront:UpdateDistribution",
+          "cloudfront:DeleteDistribution",
+          "cloudfront:TagResource",
+          "cloudfront:ListTagsForResource"
+        ]
+        Resource = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/*"
+      },
+      {
+        Sid      = "Route53CreateZone"
+        Effect   = "Allow"
+        Action   = ["route53:CreateHostedZone"]
+        Resource = "*" # no resource type exists before the zone is created
+      },
+      {
+        Sid    = "Route53Zone"
+        Effect = "Allow"
+        Action = [
+          "route53:GetHostedZone",
+          "route53:DeleteHostedZone",
+          "route53:ChangeResourceRecordSets",
+          "route53:ListResourceRecordSets",
+          "route53:ChangeTagsForResource",
+          "route53:ListTagsForResource"
+        ]
+        Resource = "arn:aws:route53:::hostedzone/*"
+      },
+      {
+        Sid      = "Route53Change"
+        Effect   = "Allow"
+        Action   = ["route53:GetChange"]
+        Resource = "arn:aws:route53:::change/*"
+      },
+      {
+        Sid      = "AcmRequest"
+        Effect   = "Allow"
+        Action   = ["acm:RequestCertificate"]
+        Resource = "*" # no resource type exists before the certificate is created
+      },
+      {
+        Sid    = "AcmCertificate"
+        Effect = "Allow"
+        Action = [
+          "acm:DescribeCertificate",
+          "acm:DeleteCertificate",
+          "acm:AddTagsToCertificate",
+          "acm:RemoveTagsFromCertificate",
+          "acm:ListTagsForCertificate",
+          "acm:GetCertificate"
+        ]
+        Resource = "arn:aws:acm:us-east-1:${data.aws_caller_identity.current.account_id}:certificate/*"
+      }
+    ]
+  })
 }
 
-resource "aws_iam_role_policy_attachment" "github_terraform_apply_iam" {
-  role       = aws_iam_role.github_terraform_apply.name
-  policy_arn = "arn:aws:iam::aws:policy/IAMFullAccess"
+resource "aws_iam_role_policy" "github_terraform_apply_iam_bootstrap" {
+  name = "terraform-apply-iam-bootstrap"
+  role = aws_iam_role.github_terraform_apply.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Sid    = "OidcProvider"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateOpenIDConnectProvider",
+          "iam:GetOpenIDConnectProvider",
+          "iam:UpdateOpenIDConnectProviderThumbprint",
+          "iam:DeleteOpenIDConnectProvider",
+          "iam:TagOpenIDConnectProvider",
+          "iam:UntagOpenIDConnectProvider"
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+      },
+      {
+        # Self-managing bootstrap pattern: this role also manages the three
+        # msthedeveloper-github-* roles (including itself) and their policies.
+        Sid    = "GithubOidcRoles"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:GetRole",
+          "iam:DeleteRole",
+          "iam:UpdateRole",
+          "iam:UpdateAssumeRolePolicy",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:ListRoleTags",
+          "iam:PutRolePolicy",
+          "iam:GetRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:ListRolePolicies",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListInstanceProfilesForRole"
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/msthedeveloper-github-*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "github_terraform_apply_state_backend" {
+  name = "terraform-apply-state-backend"
+  role = aws_iam_role.github_terraform_apply.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Effect = "Allow"
+
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+
+        Resource = [
+          "arn:aws:s3:::unique-bucket-name-msctf/msthedeveloper-site/terraform.tfstate",
+          "arn:aws:s3:::unique-bucket-name-msctf/msthedeveloper-site/terraform.tfstate.tflock"
+        ]
+      },
+      {
+        Effect = "Allow"
+
+        Action = [
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
+        ]
+
+        Resource = "arn:aws:s3:::unique-bucket-name-msctf"
+
+        Condition = {
+          StringLike = {
+            "s3:prefix" = [
+              "msthedeveloper-site/*"
+            ]
+          }
+        }
+      },
+      {
+        Effect = "Allow"
+
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey"
+        ]
+
+        Resource = "arn:aws:kms:us-east-1:771700505853:key/3e5a66e8-ccc2-4eb0-b32b-d3e5a9f0847c"
+      }
+    ]
+  })
 }
