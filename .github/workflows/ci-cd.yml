@@ -173,9 +173,7 @@ jobs:
 
   terraform-apply:
     name: Terraform apply
-    needs:
-      - changes
-      - terraform-check
+    needs: changes
     if: |
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
@@ -210,11 +208,15 @@ jobs:
 
   deploy:
     name: Deploy website
-    needs: changes
+    needs: [changes, terraform-apply]
     if: |
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      needs.changes.outputs.app == 'true'
+      needs.changes.outputs.app == 'true' &&
+      (
+        needs.terraform-apply.result == 'success' ||
+        needs.terraform-apply.result == 'skipped'
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
