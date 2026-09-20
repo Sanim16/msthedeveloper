@@ -32,4 +32,3 @@ variable "price_class" {
     error_message = "Invalid CloudFront price class."
   }
 }
-
