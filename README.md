@@ -1,3 +1,5 @@
+[![GitHub Actions](https://github.com/Sanim16/msthedeveloper/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Sanim16/msthedeveloper/actions/workflows/ci-cd.yml)
+
 # msthedeveloper.com
 
 Personal portfolio for Momoh Sani Musa — Senior DevOps / Platform Engineer.
